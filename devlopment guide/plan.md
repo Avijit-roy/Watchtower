@@ -64,7 +64,7 @@ You're starting from zero in DevOps, so this plan is written to teach the "why" 
 - [x] Make the GitHub repo **public** — this gives you unlimited free GitHub Actions minutes and free GitHub Container Registry storage (both are limited on private repos)
 - [x] GitHub Actions workflow: on PR — install deps, lint, run tests
 - [x] Add Docker build step to the same workflow (build only, no push yet)
-- [ ] Branch protection on `main`: PRs required, CI must pass before merge
+- [x] Branch protection on `main`: PRs required, CI must pass before merge
 
 **Demo at end of phase:** Open a PR with a deliberate lint error, watch CI fail; fix it, watch CI pass.
 
