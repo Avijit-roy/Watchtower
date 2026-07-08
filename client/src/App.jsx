@@ -9,6 +9,7 @@
  *   /dashboard      → DashboardPage (protected)
  *   /incidents/:id  → IncidentDetailPage (protected)
  */
+import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
@@ -21,6 +22,9 @@ import { IncidentDetailPage } from './pages/IncidentDetailPage';
 import { StatusPage } from './pages/StatusPage';
 
 export default function App() {
+  if (Math.random() > 0.5) {
+    useState();
+  }
   return (
     <BrowserRouter>
       <AuthProvider>
