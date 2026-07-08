@@ -1,0 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Slate-950 dark background — high legibility, calm ops tool aesthetic */
+  html {
+    @apply bg-slate-950 text-slate-100 antialiased;
+  }
+
+  body {
+    @apply font-sans;
+  }
+
+  /* Ensure focus states are always visible (accessibility — FRONTEND_GUIDELINES.md) */
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-sky-500;
+  }
+}
+
+@layer components {
+  /* Reusable card shell — used across incident cards, timeline entries, etc. */
+  .card {
+    @apply bg-slate-900 border border-slate-800 rounded-xl p-5;
+  }
+
+  /* Section divider */
+  .section-divider {
+    @apply border-t border-slate-800 my-6;
+  }
+}
+
+@layer utilities {
+  /* Text truncation helper */
+  .truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}

@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  worker:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    ports:
+      - "5001:5001"
+    environment:
+      - PORT=5001
+      - SMTP_HOST=aj5298626@gmail.com
+      - SMTP_PORT=587
+      - SMTP_USER=aj5298626@gmail.com
+      - SMTP_PASS=ubqa qjyp eqia lyas
+      - SLACK_WEBHOOK_URL=https://hooks.slack.com/services/test/web/hook
+      - NOTIFICATION_EMAIL=aj5298626@gmail.com
+    restart: always
+
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb+srv://Avijit:Avijit&%231234@cluster0.0xmo6bj.mongodb.net/incident-command?retryWrites=true&w=majority
+      - JWT_SECRET=supersecretjwtsigningkeyincidentcommandwatchtower123
+      - JWT_EXPIRES_IN=7d
+      - CLIENT_ORIGIN=http://localhost:5173
+      - WORKER_URL=http://worker:5001/notify
+    depends_on:
+      - worker
+    restart: always
+
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+      args:
+        - VITE_API_URL=http://localhost:5000/api
+        - VITE_SOCKET_URL=http://localhost:5000
+    ports:
+      - "5173:80"
+    depends_on:
+      - server
+    restart: always

@@ -1,0 +1,21 @@
+{
+  "name": "watchtower",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server",
+    "worker"
+  ],
+  "scripts": {
+    "dev:client": "npm run dev -w client",
+    "dev:server": "npm run dev -w incident-command-server",
+    "dev:worker": "npm run dev -w incident-command-worker",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:worker\" \"npm run dev:client\"",
+    "test:server": "npm run test -w incident-command-server",
+    "lint:server": "npm run lint -w incident-command-server",
+    "lint:client": "npm run lint -w client"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
