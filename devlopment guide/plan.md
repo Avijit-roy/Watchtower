@@ -61,7 +61,7 @@ You're starting from zero in DevOps, so this plan is written to teach the "why" 
 
 **Goal:** Every PR is automatically linted, tested, and build-checked — for free.
 
-- [ ] Make the GitHub repo **public** — this gives you unlimited free GitHub Actions minutes and free GitHub Container Registry storage (both are limited on private repos)
+- [x] Make the GitHub repo **public** — this gives you unlimited free GitHub Actions minutes and free GitHub Container Registry storage (both are limited on private repos)
 - [x] GitHub Actions workflow: on PR — install deps, lint, run tests
 - [x] Add Docker build step to the same workflow (build only, no push yet)
 - [ ] Branch protection on `main`: PRs required, CI must pass before merge
