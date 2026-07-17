@@ -1,0 +1,24 @@
+# Client Service — NodePort
+# NodePort exposes the service on a static port on every node in the cluster.
+# The kind-config.yaml maps host port 8080 → containerPort 30080 on the kind node.
+# So: http://localhost:8080 on your machine → NodePort 30080 → pod port 80.
+#
+# In Phase 6 (real cluster), this becomes a LoadBalancer or goes behind an Ingress.
+apiVersion: v1
+kind: Service
+metadata:
+  name: watchtower-client
+  namespace: watchtower
+  labels:
+    app.kubernetes.io/name: watchtower
+    app.kubernetes.io/component: client
+spec:
+  type: NodePort
+  selector:
+    app: watchtower-client
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      nodePort: 30080   # must match kind-config.yaml extraPortMappings containerPort
+      protocol: TCP

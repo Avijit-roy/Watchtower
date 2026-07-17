@@ -2,15 +2,21 @@
  * StatusPage.jsx — public status page (no authentication required)
  * FR7-FR9: lists open incidents + recent resolved history.
  * Polls every 30 seconds so the page stays fresh without a manual refresh.
+ *
+ * Renders inside DashboardLayout for authenticated users so they don't lose
+ * their nav/session context when clicking the Status Page link.
  */
 import { useEffect, useState } from 'react';
 import { getStatus } from '../api/incidents';
+import { useAuth } from '../context/AuthContext';
+import { DashboardLayout } from '../layouts/DashboardLayout';
 import { PublicLayout } from '../layouts/PublicLayout';
 import { SeverityBadge, StatusBadge } from '../components/Badge';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { formatRelativeTime, formatDuration } from '../utils/formatDate';
 
 export function StatusPage() {
+  const { user, isLoading: authLoading } = useAuth();
   const [data, setData] = useState({ open: [], recent: [] });
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -36,8 +42,11 @@ export function StatusPage() {
 
   const allClear = data.open.length === 0;
 
+  // Wait for auth to finish restoring so layout doesn't flicker
+  const Layout = (!authLoading && user) ? DashboardLayout : PublicLayout;
+
   return (
-    <PublicLayout>
+    <Layout>
       <div className="max-w-2xl mx-auto px-4 py-12">
         {/* Overall status indicator */}
         <div className={`rounded-2xl p-6 mb-8 text-center border ${allClear ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
@@ -87,7 +96,7 @@ export function StatusPage() {
           <p className="text-center text-sm text-slate-600">No recent incidents.</p>
         )}
       </div>
-    </PublicLayout>
+    </Layout>
   );
 }
 

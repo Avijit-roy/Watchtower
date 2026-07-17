@@ -1,0 +1,80 @@
+# Production Server Deployment
+# Key differences from k8s/server/deployment.yaml (local kind):
+#   - image: ghcr.io/<GITHUB_USERNAME>/watchtower-server:latest  (real registry)
+#   - imagePullPolicy: Always  (always pull the latest pushed image)
+#   - imagePullSecrets: ghcr-credentials  (secret holding your GitHub PAT)
+#   - replicas: 2  (demonstrates horizontal scaling on a real cluster)
+#
+# Replace <GITHUB_USERNAME> with your actual GitHub username before applying.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: watchtower-server
+  namespace: watchtower
+  labels:
+    app.kubernetes.io/name: watchtower
+    app.kubernetes.io/component: server
+    environment: production
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: watchtower-server
+  template:
+    metadata:
+      labels:
+        app: watchtower-server
+        app.kubernetes.io/component: server
+    spec:
+      # Pull credentials for ghcr.io — created in setup-k3s.sh
+      imagePullSecrets:
+        - name: ghcr-credentials
+
+      containers:
+        - name: server
+          # Replace <GITHUB_USERNAME> with your GitHub username
+          image: ghcr.io/avijit-roy/watchtower-server:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+              name: http
+
+          envFrom:
+            - configMapRef:
+                name: watchtower-config
+
+          env:
+            - name: MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: watchtower-secret
+                  key: MONGODB_URI
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: watchtower-secret
+                  key: JWT_SECRET
+
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 5000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"

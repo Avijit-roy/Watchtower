@@ -1,0 +1,11 @@
+# kind cluster configuration for local Watchtower development
+# Single control-plane node with a port mapping so the client NodePort
+# is reachable at http://localhost:8080 on the host machine.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 30080   # NodePort assigned to the client Service
+        hostPort: 8080
+        protocol: TCP

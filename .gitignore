@@ -39,3 +39,8 @@ coverage/
 *.tgz
 *.tar.gz
 .bin/
+
+# Kubernetes — real secrets must NEVER be committed
+# Use k8s/secret.example.yaml as the template
+k8s/secret.yaml
+k8s/production/secret.yaml

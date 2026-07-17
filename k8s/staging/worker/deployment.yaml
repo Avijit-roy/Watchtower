@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: watchtower-worker
+  namespace: watchtower-staging
+  labels:
+    app.kubernetes.io/name: watchtower
+    app.kubernetes.io/component: worker
+    environment: staging
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: watchtower-worker
+  template:
+    metadata:
+      labels:
+        app: watchtower-worker
+        app.kubernetes.io/component: worker
+    spec:
+      imagePullSecrets:
+        - name: ghcr-credentials
+      containers:
+        - name: worker
+          image: ghcr.io/avijit-roy/watchtower-worker:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5001
+              name: http
+          env:
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: watchtower-config
+                  key: WORKER_PORT
+            - name: SMTP_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: watchtower-config
+                  key: SMTP_HOST
+            - name: SMTP_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: watchtower-config
+                  key: SMTP_PORT
+            - name: NOTIFICATION_EMAIL
+              valueFrom:
+                configMapKeyRef:
+                  name: watchtower-config
+                  key: NOTIFICATION_EMAIL
+            - name: SMTP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: watchtower-secret
+                  key: SMTP_USER
+            - name: SMTP_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: watchtower-secret
+                  key: SMTP_PASS
+            - name: SLACK_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: watchtower-secret
+                  key: SLACK_WEBHOOK_URL
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 5001
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: "30m"
+              memory: "32Mi"
+            limits:
+              cpu: "150m"
+              memory: "128Mi"

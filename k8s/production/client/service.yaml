@@ -1,0 +1,20 @@
+# Production Client Service — ClusterIP
+# In production, all external traffic comes through the Nginx Ingress Controller.
+# NodePort is not needed — the Ingress routes / → this service.
+apiVersion: v1
+kind: Service
+metadata:
+  name: watchtower-client
+  namespace: watchtower
+  labels:
+    app.kubernetes.io/name: watchtower
+    app.kubernetes.io/component: client
+spec:
+  type: ClusterIP
+  selector:
+    app: watchtower-client
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP

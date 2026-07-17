@@ -1,0 +1,20 @@
+# Worker Service — ClusterIP (internal only)
+# The server pod calls the worker using: http://watchtower-worker:5001/notify
+# Kubernetes DNS resolves "watchtower-worker" to this Service's ClusterIP automatically.
+apiVersion: v1
+kind: Service
+metadata:
+  name: watchtower-worker
+  namespace: watchtower
+  labels:
+    app.kubernetes.io/name: watchtower
+    app.kubernetes.io/component: worker
+spec:
+  type: ClusterIP
+  selector:
+    app: watchtower-worker
+  ports:
+    - name: http
+      port: 5001
+      targetPort: 5001
+      protocol: TCP

@@ -21,7 +21,7 @@ export function SocketProvider({ children }) {
       return;
     }
 
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || (import.meta.env.DEV ? 'http://localhost:5000' : window.location.origin);
     
     // ponytail: minimal configuration for Socket.io connection
     const newSocket = io(socketUrl, {

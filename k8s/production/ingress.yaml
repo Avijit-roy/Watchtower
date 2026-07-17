@@ -1,0 +1,72 @@
+# Nginx Ingress — routes external HTTPS traffic to the correct service.
+#
+# Traffic flow:
+#   Internet → EC2 port 443 → Nginx Ingress Controller → (path based routing)
+#     /api/*       → watchtower-server:5000   (REST API + Socket.io)
+#     /socket.io/* → watchtower-server:5000   (Socket.io upgrade)
+#     /*           → watchtower-client:80     (React SPA)
+#
+# TLS:
+#   cert-manager sees the tls[] section and automatically issues a certificate
+#   from Let's Encrypt (using the letsencrypt-prod ClusterIssuer).
+#   The certificate is stored in secret 'watchtower-tls' in this namespace.
+#
+# IMPORTANT: Replace <EC2_PUBLIC_IP> with your actual EC2 public IP.
+#   Example: if IP is 3.110.45.67, host becomes: 3.110.45.67.sslip.io
+#
+# First-time deploy: use letsencrypt-staging issuer to avoid rate limits.
+# Once staging cert works, switch to letsencrypt-prod.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: watchtower-ingress
+  namespace: watchtower
+  labels:
+    app.kubernetes.io/name: watchtower
+  annotations:
+    # Which Ingress controller to use
+    kubernetes.io/ingress.class: "nginx"
+    # cert-manager: issue a cert from this ClusterIssuer
+    # Switch to letsencrypt-prod once staging works
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # Enable WebSocket upgrades for Socket.io
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
+spec:
+  tls:
+    - hosts:
+        # Replace <EC2_PUBLIC_IP> with your EC2 public IP
+        - "16.170.246.101.sslip.io"
+      secretName: watchtower-tls
+
+  rules:
+    - host: "16.170.246.101.sslip.io"
+      http:
+        paths:
+          # API traffic — must come before / to avoid the SPA catching it
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: watchtower-server
+                port:
+                  number: 5000
+          # Socket.io traffic
+          - path: /socket.io
+            pathType: Prefix
+            backend:
+              service:
+                name: watchtower-server
+                port:
+                  number: 5000
+          # Everything else → client (React SPA)
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: watchtower-client
+                port:
+                  number: 80

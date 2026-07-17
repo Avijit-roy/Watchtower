@@ -105,14 +105,63 @@ Copy the root [.env.example](file:///media/avijit/DATA1/vsproject/my%20file/webd
 
 ## Deployment
 
-Deployment is fully automated via GitHub Actions, running entirely on free-tier infrastructure — see `TECH_STACK.md` for the full cost breakdown:
+Deployment is fully automated via GitHub Actions, running entirely on free-tier infrastructure (k3s on AWS EC2, GHCR, MongoDB Atlas) — see `TECH_STACK.md` for the full cost breakdown.
 
-1. Push to a feature branch → PR checks run (lint, test, build)
-2. Merge to `main` → Docker images built and pushed to **GitHub Container Registry**
-3. Auto-deploy to **staging** namespace on the k3s cluster
-4. Manual approval gate → deploy to **production** namespace on the same k3s cluster
+### CI/CD Pipeline Architecture
+```
+  [Developer Push]
+         │
+         ▼
+  ┌──────────────┐
+  │  CI Pipeline │ (PR checks: lint, test, dry-run build)
+  └──────┬───────┘
+         │ (Merge to main)
+         ▼
+  ┌──────────────┐
+  │ Build & Push │ (Builds environment-agnostic client/server/worker, tags latest + SHA, pushes to GHCR)
+  └──────┬───────┘
+         │
+         ▼
+  ┌─────────────────┐
+  │ Deploy Staging  │ (Auto-deploys to 'watchtower-staging' namespace; URL: staging.<IP>.sslip.io)
+  └──────┬──────────┘
+         │
+         ▼
+ ┌───────────────┐
+ │   Approval    │ (Requires manual review and approval in GitHub Environment settings)
+ └──────┬────────┘
+        │ (Approved)
+        ▼
+  ┌─────────────────┐
+  │Deploy Production│ (Deploys to 'watchtower' namespace; URL: <IP>.sslip.io)
+  └─────────────────┘
+```
 
-Kubernetes manifests live in `/k8s`, organized by environment (`/k8s/staging`, `/k8s/production`).
+### GitHub Secrets Setup
+To enable the deployment, configure the following secrets under **Settings** → **Secrets and variables** → **Actions** in your GitHub repository:
+- `KUBECONFIG`: The contents of your Kubernetes cluster's kubeconfig (typically retrieved from `/etc/rancher/k3s/k3s.yaml` on your EC2 instance).
+- `MONGODB_URI`: The MongoDB Atlas connection string.
+- `JWT_SECRET`: Secret key used for signing JWT auth tokens.
+- `SMTP_USER`: Gmail/SMTP username for notifications.
+- `SMTP_PASS`: Gmail/SMTP password or app-specific password.
+- `SLACK_WEBHOOK_URL`: Webhook URL for Slack alerts.
+
+### Configuring Manual Approval Gate
+1. Navigate to your GitHub repository.
+2. Go to **Settings** → **Environments**.
+3. Click **New environment** and name it `production`.
+4. Check the box for **Required reviewers** and add yourself (or designated reviewers).
+5. Save. Any build to production will now pause and wait for your manual approval.
+
+### Rollbacks on Demand
+If a deployment fails or contains bugs, you can manually trigger a rollback to any previous version:
+1. Navigate to the **Actions** tab in GitHub.
+2. Select the **Manual Rollback** workflow on the left sidebar.
+3. Click the **Run workflow** dropdown.
+4. Select the target **Environment** (`staging` or `production`) and enter the specific Docker tag (e.g. `sha-8a2bf63`).
+5. Click **Run workflow**. The pipeline will immediately update the running images to the specified tag and verify the rollout.
+
+Kubernetes manifests live in [/k8s](file:///media/avijit/DATA1/vsproject/my%20file/webdeveloping/Watchtower/k8s), organized by environment ([/k8s/staging](file:///media/avijit/DATA1/vsproject/my%20file/webdeveloping/Watchtower/k8s/staging), [/k8s/production](file:///media/avijit/DATA1/vsproject/my%20file/webdeveloping/Watchtower/k8s/production)).
 
 ## Project Structure
 
@@ -153,9 +202,9 @@ See `plan.md` for the full phased build plan with detailed checklists. High-leve
 
 - [x] Core MERN app (incidents, timeline, auth)
 - [x] Dockerize all services
-- [ ] CI pipeline (lint/test/build)
-- [ ] Local Kubernetes deploy (minikube/kind)
-- [ ] Free-tier EC2 server + k3s cluster + Nginx Ingress + free TLS
+- [x] CI pipeline (lint/test/build)
+- [x] Local Kubernetes deploy (minikube/kind)
+- [x] Free-tier EC2 server + k3s cluster + Nginx Ingress + free TLS
 - [ ] CD pipeline with staging/production gates
 - [ ] Monitoring & autoscaling
 - [ ] Chaos test + self-healing demo

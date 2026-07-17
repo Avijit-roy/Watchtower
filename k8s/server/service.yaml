@@ -1,0 +1,21 @@
+# Server Service — ClusterIP (internal only)
+# ClusterIP means: only other pods inside the cluster can reach the server.
+# The client pod calls the server via this service name: "watchtower-server:5000"
+# No external access — the client Nginx proxy handles external → server routing.
+apiVersion: v1
+kind: Service
+metadata:
+  name: watchtower-server
+  namespace: watchtower
+  labels:
+    app.kubernetes.io/name: watchtower
+    app.kubernetes.io/component: server
+spec:
+  type: ClusterIP
+  selector:
+    app: watchtower-server
+  ports:
+    - name: http
+      port: 5000
+      targetPort: 5000
+      protocol: TCP
