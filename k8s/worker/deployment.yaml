@@ -1,0 +1,86 @@
+# Worker Deployment
+# The notification worker is a fire-and-forget service: server calls it via HTTP.
+# It has a liveness probe but no readiness probe — it's not in a load balancer.
+# imagePullPolicy: Never — use locally-loaded kind image.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: watchtower-worker
+  namespace: watchtower
+  labels:
+    app.kubernetes.io/name: watchtower
+    app.kubernetes.io/component: worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: watchtower-worker
+  template:
+    metadata:
+      labels:
+        app: watchtower-worker
+        app.kubernetes.io/component: worker
+    spec:
+      containers:
+        - name: worker
+          image: watchtower-worker:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5001
+              name: http
+
+          # Non-sensitive env from ConfigMap
+          env:
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: watchtower-config
+                  key: WORKER_PORT
+            - name: SMTP_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: watchtower-config
+                  key: SMTP_HOST
+            - name: SMTP_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: watchtower-config
+                  key: SMTP_PORT
+            - name: NOTIFICATION_EMAIL
+              valueFrom:
+                configMapKeyRef:
+                  name: watchtower-config
+                  key: NOTIFICATION_EMAIL
+            # Sensitive env from Secret
+            - name: SMTP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: watchtower-secret
+                  key: SMTP_USER
+            - name: SMTP_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: watchtower-secret
+                  key: SMTP_PASS
+            - name: SLACK_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: watchtower-secret
+                  key: SLACK_WEBHOOK_URL
+
+          # Liveness probe — restart if the worker HTTP server stops responding.
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 5001
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 3
+
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"

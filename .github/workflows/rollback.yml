@@ -1,0 +1,63 @@
+name: Manual Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target Environment'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+        default: staging
+      tag:
+        description: 'Docker image tag to roll back to (e.g. sha-8a2bf63)'
+        required: true
+        type: string
+
+jobs:
+  rollback:
+    name: Rollback Workloads
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Verify cluster connectivity
+        run: kubectl cluster-info
+
+      - name: Determine Namespace and Deployments
+        id: env-vars
+        run: |
+          if [ "${{ github.event.inputs.environment }}" = "production" ]; then
+            echo "namespace=watchtower" >> $GITHUB_OUTPUT
+          else
+            echo "namespace=watchtower-staging" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set Deployment Images
+        run: |
+          NAMESPACE="${{ steps.env-vars.outputs.namespace }}"
+          TAG="${{ github.event.inputs.tag }}"
+          
+          echo "Performing rollback to tag: $TAG in namespace: $NAMESPACE"
+          
+          # Update the images using kubectl set image
+          kubectl set image deployment/watchtower-server server=ghcr.io/avijit-roy/watchtower-server:$TAG -n $NAMESPACE
+          kubectl set image deployment/watchtower-worker worker=ghcr.io/avijit-roy/watchtower-worker:$TAG -n $NAMESPACE
+          kubectl set image deployment/watchtower-client client=ghcr.io/avijit-roy/watchtower-client:$TAG -n $NAMESPACE
+          
+          # Wait for rollouts to verify success
+          kubectl rollout status deployment/watchtower-server -n $NAMESPACE --timeout=120s
+          kubectl rollout status deployment/watchtower-worker -n $NAMESPACE --timeout=120s
+          kubectl rollout status deployment/watchtower-client -n $NAMESPACE --timeout=120s
+          
+          echo "Rollback successfully completed!"

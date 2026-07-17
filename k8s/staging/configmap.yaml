@@ -1,0 +1,22 @@
+# Staging ConfigMap — non-sensitive environment config for the k3s cluster staging namespace.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: watchtower-config
+  namespace: watchtower-staging
+  labels:
+    app.kubernetes.io/name: watchtower
+    environment: staging
+data:
+  # Server config
+  PORT: "5000"
+  NODE_ENV: "production"
+  CLIENT_ORIGIN: "https://staging.16.170.246.101.sslip.io"
+  WORKER_URL: "http://watchtower-worker:5001/notify"
+  JWT_EXPIRES_IN: "7d"
+
+  # Worker config
+  WORKER_PORT: "5001"
+  SMTP_HOST: "smtp.gmail.com"
+  SMTP_PORT: "587"
+  NOTIFICATION_EMAIL: "aj5298626@gmail.com"

@@ -1,0 +1,58 @@
+# Client Deployment — Nginx serving the pre-built React SPA.
+# The API URL and Socket URL are baked into the image at build time (Vite env vars).
+# imagePullPolicy: Never — use locally-loaded kind image.
+#
+# NOTE: The Nginx image has no shell-based health endpoint by default.
+# We probe GET / which returns 200 when Nginx is serving correctly.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: watchtower-client
+  namespace: watchtower
+  labels:
+    app.kubernetes.io/name: watchtower
+    app.kubernetes.io/component: client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: watchtower-client
+  template:
+    metadata:
+      labels:
+        app: watchtower-client
+        app.kubernetes.io/component: client
+    spec:
+      containers:
+        - name: client
+          image: watchtower-client:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 80
+              name: http
+
+          # Readiness probe — only route traffic once Nginx is ready to serve.
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+
+          # Liveness probe — restart if Nginx stops responding.
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 3
+
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"

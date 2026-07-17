@@ -1,0 +1,61 @@
+# Production Client Deployment
+# The client image is built with the production API URL baked in at build time
+# (Vite VITE_API_URL env var). The image in ghcr.io was built by the CI pipeline
+# with the correct production URLs.
+#
+# Replace <GITHUB_USERNAME> with your GitHub username.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: watchtower-client
+  namespace: watchtower
+  labels:
+    app.kubernetes.io/name: watchtower
+    app.kubernetes.io/component: client
+    environment: production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: watchtower-client
+  template:
+    metadata:
+      labels:
+        app: watchtower-client
+        app.kubernetes.io/component: client
+    spec:
+      imagePullSecrets:
+        - name: ghcr-credentials
+
+      containers:
+        - name: client
+          # Replace <GITHUB_USERNAME> with your GitHub username
+          image: ghcr.io/avijit-roy/watchtower-client:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+              name: http
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 3
+
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"

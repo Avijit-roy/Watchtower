@@ -1,0 +1,9 @@
+# Namespace — all Watchtower resources live here, isolated from 'default'.
+# Using a namespace means: kubectl commands need -n watchtower, and
+# resources in different namespaces don't interfere.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: watchtower
+  labels:
+    app.kubernetes.io/name: watchtower

@@ -1,0 +1,79 @@
+# Server Deployment
+# - 1 replica to start (Phase 5 is about understanding k8s, not scaling)
+# - imagePullPolicy: Never = use locally-loaded image, don't try to pull from a registry
+# - Liveness probe:  if /healthz fails, Kubernetes RESTARTS the container
+# - Readiness probe: if /healthz fails, Kubernetes removes pod from Service endpoints
+#   (traffic stops going to it) — different from liveness
+# - Resource limits prevent one misbehaving pod from starving the node
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: watchtower-server
+  namespace: watchtower
+  labels:
+    app.kubernetes.io/name: watchtower
+    app.kubernetes.io/component: server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: watchtower-server
+  template:
+    metadata:
+      labels:
+        app: watchtower-server
+        app.kubernetes.io/component: server
+    spec:
+      containers:
+        - name: server
+          image: watchtower-server:latest
+          imagePullPolicy: Never   # use kind-loaded local image
+          ports:
+            - containerPort: 5000
+              name: http
+
+          # Environment from ConfigMap (non-sensitive)
+          envFrom:
+            - configMapRef:
+                name: watchtower-config
+
+          # Individual secret values (sensitive)
+          env:
+            - name: MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: watchtower-secret
+                  key: MONGODB_URI
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: watchtower-secret
+                  key: JWT_SECRET
+
+          # Liveness probe — if this fails repeatedly, k8s restarts the container.
+          # initialDelaySeconds: give the app time to connect to MongoDB first.
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 5000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+
+          # Readiness probe — if this fails, pod is removed from load balancer.
+          # Lower initialDelay so traffic only routes here once the app is ready.
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"

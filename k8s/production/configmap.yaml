@@ -1,0 +1,31 @@
+# Production ConfigMap — non-sensitive environment config for the k3s cluster.
+#
+# IMPORTANT: Replace <EC2_PUBLIC_IP> with your actual EC2 instance public IP
+# before applying. Example: if your IP is 3.110.45.67, the URLs become:
+#   CLIENT_ORIGIN: http://3.110.45.67.sslip.io     (or https:// after TLS is set up)
+#   VITE_API_URL:  https://3.110.45.67.sslip.io/api
+#
+# sslip.io magic: any DNS query for X.X.X.X.sslip.io resolves to X.X.X.X automatically.
+# No domain purchase, no Route53 — it just works.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: watchtower-config
+  namespace: watchtower
+  labels:
+    app.kubernetes.io/name: watchtower
+    environment: production
+data:
+  # Server config
+  PORT: "5000"
+  NODE_ENV: "production"
+  # Replace <EC2_PUBLIC_IP> with your EC2 public IP (e.g. 3.110.45.67)
+  CLIENT_ORIGIN: "https://16.170.246.101.sslip.io"
+  WORKER_URL: "http://watchtower-worker:5001/notify"
+  JWT_EXPIRES_IN: "7d"
+
+  # Worker config
+  WORKER_PORT: "5001"
+  SMTP_HOST: "smtp.gmail.com"
+  SMTP_PORT: "587"
+  NOTIFICATION_EMAIL: "aj5298626@gmail.com"

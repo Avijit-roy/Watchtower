@@ -1,0 +1,9 @@
+# Production namespace — separate from local 'watchtower' namespace used in Phase 5.
+# All production resources live here.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: watchtower
+  labels:
+    app.kubernetes.io/name: watchtower
+    environment: production

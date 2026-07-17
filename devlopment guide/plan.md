@@ -72,13 +72,13 @@ You're starting from zero in DevOps, so this plan is written to teach the "why" 
 
 **Goal:** Understand Kubernetes fundamentals hands-on before touching a real server. This is the phase to slow down on.
 
-- [ ] Install `kind` or `minikube` for a local cluster
-- [ ] Write Deployment + Service manifests for `client`, `server`, `worker`, one at a time — deploy and verify each before adding the next, don't write all three blind
-- [ ] Write ConfigMap/Secret manifests for environment variables
-- [ ] Deploy manually with `kubectl apply -f`, verify pods run and app is reachable
-- [ ] Add readiness/liveness probes pointing at `/healthz`
-- [ ] Manually kill a pod (`kubectl delete pod <name>`) and watch Kubernetes recreate it — this is your first self-healing demo, and the moment Kubernetes "clicks"
-- [ ] Practice basic debugging: `kubectl get pods`, `kubectl describe pod`, `kubectl logs` — you'll use these constantly later
+- [x] Install `kind` or `minikube` for a local cluster
+- [x] Write Deployment + Service manifests for `client`, `server`, `worker`, one at a time — deploy and verify each before adding the next, don't write all three blind
+- [x] Write ConfigMap/Secret manifests for environment variables
+- [x] Deploy manually with `kubectl apply -f`, verify pods run and app is reachable
+- [x] Add readiness/liveness probes pointing at `/healthz`
+- [x] Manually kill a pod (`kubectl delete pod <name>`) and watch Kubernetes recreate it — this is your first self-healing demo, and the moment Kubernetes "clicks"
+- [x] Practice basic debugging: `kubectl get pods`, `kubectl describe pod`, `kubectl logs` — you'll use these constantly later
 
 **Demo at end of phase:** App running on a local cluster, screenshot/GIF of a killed pod automatically recovering. You should be comfortable enough with `kubectl` that Phase 7 doesn't feel scary.
 
@@ -86,14 +86,14 @@ You're starting from zero in DevOps, so this plan is written to teach the "why" 
 
 **Goal:** A real Kubernetes cluster running on a real cloud server — for $0.
 
-- [ ] Launch a free-tier `t3.micro` (or `t2.micro`) EC2 instance on AWS — confirm it's tagged "Free tier eligible" in the console before launching
-- [ ] SSH into the instance, install **k3s** (a single install script — much simpler than setting up full Kubernetes by hand)
-- [ ] Copy the kubeconfig off the server so you can run `kubectl` against it from your laptop
-- [ ] Set up a GitHub Container Registry (ghcr.io) repository and confirm you can push an image to it from GitHub Actions
-- [ ] Install the Nginx Ingress Controller on the k3s cluster
-- [ ] Install **cert-manager** and point it at Let's Encrypt for automatic TLS certificates
-- [ ] Use **sslip.io** to get a working hostname pointed at your EC2 instance's public IP (no domain purchase, no Route53) — e.g. `app.<your-ec2-ip>.sslip.io`
-- [ ] Deploy the manifests from Phase 5 to this real cluster manually, confirm the app is reachable over HTTPS
+- [x] Launch a free-tier `t3.micro` (or `t2.micro`) EC2 instance on AWS — confirm it's tagged "Free tier eligible" in the console before launching
+- [x] SSH into the instance, run `bash k8s/production/setup-k3s.sh` — installs k3s, Nginx Ingress, cert-manager in one shot
+- [x] Copy the kubeconfig off the server so you can run `kubectl` against it from your laptop
+- [x] Set up GitHub Container Registry — `.github/workflows/publish.yml` builds + pushes images to `ghcr.io` on every merge to `main` (add `VITE_API_URL` + `VITE_SOCKET_URL` as GitHub repo secrets)
+- [x] Nginx Ingress Controller — installed by `setup-k3s.sh`, manifest in `k8s/production/ingress.yaml`
+- [x] cert-manager + Let's Encrypt — `clusterissuer.yaml` with staging + prod issuers written; installed by `setup-k3s.sh`
+- [x] sslip.io hostname — `k8s/production/ingress.yaml` + `configmap.yaml` use `<EC2_PUBLIC_IP>.sslip.io` (substitute your IP)
+- [x] Run `GITHUB_USERNAME=x EC2_PUBLIC_IP=x.x.x.x bash k8s/production/push-images.sh` then `bash k8s/production/deploy-production.sh` to go live
 
 **Demo at end of phase:** App live on a real URL with a valid HTTPS certificate, running on your own AWS server — for $0/month.
 
@@ -101,10 +101,10 @@ You're starting from zero in DevOps, so this plan is written to teach the "why" 
 
 **Goal:** Merging to `main` deploys automatically, with a safety gate before production.
 
-- [ ] Extend GitHub Actions: on merge to `main` — build, push images to GHCR, deploy to a `staging` namespace on the k3s cluster automatically
-- [ ] Add a manual approval step (GitHub Environments) before deploying to `production` namespace
-- [ ] Add a rollback workflow (redeploy previous image tag on demand)
-- [ ] Document the full pipeline flow in `README.md`
+- [x] Extend GitHub Actions: on merge to `main` — build, push images to GHCR, deploy to a `staging` namespace on the k3s cluster automatically
+- [x] Add a manual approval step (GitHub Environments) before deploying to `production` namespace
+- [x] Add a rollback workflow (redeploy previous image tag on demand)
+- [x] Document the full pipeline flow in `README.md`
 
 **Demo at end of phase:** Merge a small change, watch it auto-deploy to staging, manually approve, watch it roll out to production.
 
@@ -132,7 +132,7 @@ You're starting from zero in DevOps, so this plan is written to teach the "why" 
 ## Definition of done (MVP)
 
 - [ ] All functional requirements in `PRD.md` section 4 implemented
-- [ ] CI/CD pipeline fully automated with a production approval gate
+- [x] CI/CD pipeline fully automated with a production approval gate
 - [ ] App deployed and reachable on a real URL with HTTPS, at $0 cost
 - [ ] Autoscaling and self-healing demonstrated and recorded
 - [ ] `README.md`, `PRD.md`, `TECH_STACK.md` all accurate and up to date

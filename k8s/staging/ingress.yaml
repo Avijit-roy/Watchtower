@@ -1,0 +1,49 @@
+# Nginx Ingress — routes external HTTPS traffic to the correct service in staging namespace.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: watchtower-ingress
+  namespace: watchtower-staging
+  labels:
+    app.kubernetes.io/name: watchtower
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
+spec:
+  tls:
+    - hosts:
+        - "staging.16.170.246.101.sslip.io"
+      secretName: watchtower-tls-staging
+  rules:
+    - host: "staging.16.170.246.101.sslip.io"
+      http:
+        paths:
+          # API traffic
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: watchtower-server
+                port:
+                  number: 5000
+          # Socket.io traffic
+          - path: /socket.io
+            pathType: Prefix
+            backend:
+              service:
+                name: watchtower-server
+                port:
+                  number: 5000
+          # Everything else → client (React SPA)
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: watchtower-client
+                port:
+                  number: 80
